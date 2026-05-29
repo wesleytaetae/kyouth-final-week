@@ -1,0 +1,22 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: simple-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - sqlite_data:/data
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: simple-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  sqlite_data:
+
