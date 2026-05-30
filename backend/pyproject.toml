@@ -5,6 +5,9 @@ description = "Minimal FastAPI backend with SQLite"
 requires-python = ">=3.14"
 dependencies = [
     "fastapi>=0.116.0",
+    "google-genai",
+    "pandas",
+    "python-dotenv",
     "uvicorn[standard]>=0.35.0",
 ]
 

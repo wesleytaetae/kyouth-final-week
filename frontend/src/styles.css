@@ -1,9 +1,10 @@
 :root {
-  color: #111827;
+  color: #14213d;
   background:
-    radial-gradient(circle at top, rgba(251, 191, 36, 0.28), transparent 30%),
-    linear-gradient(180deg, #fffdf8 0%, #f8f5ee 100%);
-  font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    radial-gradient(circle at top left, rgba(255, 183, 77, 0.3), transparent 28%),
+    radial-gradient(circle at top right, rgba(39, 174, 96, 0.18), transparent 24%),
+    linear-gradient(180deg, #fffaf2 0%, #f3efe6 100%);
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
   line-height: 1.5;
   font-weight: 400;
 }
@@ -18,142 +19,256 @@ body {
 }
 
 button,
-input {
+textarea {
   font: inherit;
+}
+
+code,
+pre {
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
 }
 
 .page-shell {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 24px;
+  padding: 28px;
 }
 
-.card {
-  width: min(720px, 100%);
-  padding: 32px;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(17, 24, 39, 0.08);
-  box-shadow: 0 28px 70px rgba(120, 53, 15, 0.12);
+.chat-card {
+  width: min(980px, 100%);
+  margin: 0 auto;
+  padding: 28px;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(20, 33, 61, 0.1);
+  box-shadow: 0 30px 80px rgba(104, 69, 22, 0.12);
+  backdrop-filter: blur(18px);
+}
+
+.hero-block {
+  max-width: 60ch;
 }
 
 .eyebrow {
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: #b45309;
 }
 
 h1 {
-  margin: 8px 0 12px;
-  font-size: clamp(2rem, 5vw, 3.4rem);
+  margin: 10px 0 14px;
+  font-size: clamp(2.2rem, 5vw, 4rem);
   line-height: 0.95;
+  letter-spacing: -0.04em;
 }
 
 .lede {
-  margin: 0 0 24px;
-  max-width: 50ch;
+  margin: 0;
   color: #4b5563;
 }
 
-.item-form {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
+.mode-bar {
+  display: inline-flex;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 8px;
+  border-radius: 999px;
+  background: rgba(20, 33, 61, 0.06);
 }
 
-.text-input,
-.submit-button,
-.ghost-button {
-  border-radius: 16px;
-  border: 1px solid rgba(17, 24, 39, 0.12);
-}
-
-.text-input {
-  padding: 14px 16px;
-  background: #fff;
-}
-
-.submit-button,
-.ghost-button {
-  cursor: pointer;
-  padding: 14px 18px;
-}
-
+.mode-pill,
+.prompt-chip,
 .submit-button {
-  background: #111827;
-  color: #fff;
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease;
 }
 
+.mode-pill {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 18px;
+  background: transparent;
+  color: #355070;
+}
+
+.mode-pill.active {
+  background: #14213d;
+  color: #fffaf2;
+}
+
+.prompt-strip {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.prompt-chip {
+  border: 1px solid rgba(20, 33, 61, 0.1);
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #355070;
+  text-align: left;
+}
+
+.prompt-chip:hover,
+.mode-pill:hover,
+.submit-button:hover {
+  transform: translateY(-1px);
+}
+
+.prompt-chip:disabled,
 .submit-button:disabled {
   opacity: 0.6;
   cursor: wait;
 }
 
-.ghost-button {
-  background: transparent;
-  color: #111827;
+.chat-log {
+  margin-top: 24px;
+  padding: 18px;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(245, 241, 232, 0.96));
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  display: grid;
+  gap: 14px;
+  min-height: 420px;
 }
 
-.list-block {
-  margin-top: 28px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(17, 24, 39, 0.08);
+.message-bubble {
+  max-width: min(760px, 100%);
+  padding: 16px 18px;
+  border-radius: 22px;
 }
 
-.list-header {
+.message-bubble.user {
+  margin-left: auto;
+  background: #14213d;
+  color: #fffaf2;
+  border-bottom-right-radius: 8px;
+}
+
+.message-bubble.assistant {
+  background: #fffaf2;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  border-bottom-left-radius: 8px;
+}
+
+.message-bubble.pending {
+  border-style: dashed;
+}
+
+.message-label {
+  margin-bottom: 8px;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.7;
+}
+
+.user-text {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.json-block {
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.92rem;
+  color: #22324f;
+}
+
+.pending-text,
+.composer-hint,
+.error-message {
+  margin: 0;
+  color: #6b7280;
+}
+
+.error-message {
+  margin-top: 18px;
+  color: #b91c1c;
+}
+
+.composer {
+  margin-top: 22px;
+  padding: 18px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(20, 33, 61, 0.08);
+}
+
+.composer-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+  color: #355070;
+}
+
+.composer-input {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid rgba(20, 33, 61, 0.12);
+  border-radius: 18px;
+  padding: 16px;
+  min-height: 110px;
+  background: #fffdf8;
+  color: #14213d;
+}
+
+.composer-footer {
+  margin-top: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
 }
 
-.list-header h2 {
-  margin: 0;
-}
-
-.item-list {
-  list-style: none;
-  padding: 0;
-  margin: 18px 0 0;
-  display: grid;
-  gap: 10px;
-}
-
-.item-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 16px;
+.submit-button {
+  border: 0;
   border-radius: 18px;
-  background: #fff8eb;
+  padding: 14px 22px;
+  background: #f59e0b;
+  color: #1f2937;
+  font-weight: 600;
 }
 
-.item-row time,
-.state-message,
-.error-message {
-  color: #6b7280;
-}
-
-.error-message {
-  color: #b91c1c;
-}
-
-@media (max-width: 640px) {
-  .card {
-    padding: 24px;
+@media (max-width: 720px) {
+  .page-shell {
+    padding: 16px;
   }
 
-  .item-form {
-    grid-template-columns: 1fr;
+  .chat-card {
+    padding: 20px;
   }
 
-  .item-row,
-  .list-header {
+  .mode-bar {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .prompt-strip {
     flex-direction: column;
-    align-items: flex-start;
+  }
+
+  .prompt-chip {
+    width: 100%;
+  }
+
+  .composer-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .submit-button {
+    width: 100%;
   }
 }
-

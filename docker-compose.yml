@@ -4,6 +4,10 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     container_name: simple-backend
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_PATH: /app/data/app.db
     ports:
       - "8000:8000"
     volumes:
