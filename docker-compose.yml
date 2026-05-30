@@ -1,12 +1,13 @@
 services:
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: simple-backend
     ports:
       - "8000:8000"
     volumes:
-      - sqlite_data:/data
+      - sqlite_data:/app/data
 
   frontend:
     build:
@@ -19,4 +20,3 @@ services:
 
 volumes:
   sqlite_data:
-

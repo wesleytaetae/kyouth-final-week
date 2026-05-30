@@ -13,10 +13,11 @@ RUN apt-get update \
 
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
-COPY pyproject.toml ./
+COPY backend/pyproject.toml ./pyproject.toml
 RUN uv sync --no-dev
 
-COPY app ./app
+COPY backend/app ./app
+COPY data ./data
 
 EXPOSE 8000
 

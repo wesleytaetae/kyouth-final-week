@@ -4,7 +4,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app.db import get_connection, init_db
+from app.db import amazon_products_count, get_connection, init_db
+from app.import_amazon_xlsx import DEFAULT_WORKBOOK_PATH, import_workbook
 
 
 class ItemCreate(BaseModel):
@@ -20,6 +21,8 @@ class Item(BaseModel):
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     init_db()
+    if DEFAULT_WORKBOOK_PATH.exists() and amazon_products_count() == 0:
+        import_workbook(DEFAULT_WORKBOOK_PATH, replace=False)
     yield
 
 
@@ -65,4 +68,3 @@ def create_item(payload: ItemCreate) -> Item:
         ).fetchone()
 
     return Item(**dict(row))
-
