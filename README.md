@@ -19,11 +19,23 @@ Then open:
 
 ## Backend notes
 
-- SQLite data is stored in a Docker volume mounted at `/data`
+- SQLite data is stored by default in `data/app.db`
+- In Docker, the backend seeds `amazon_products` from `data/amazon.xlsx` on first launch if the table is empty
 - The API exposes:
   - `GET /api/health`
   - `GET /api/items`
   - `POST /api/items`
+
+## Import `amazon.xlsx` into SQLite
+
+The workbook already lives at `data/amazon.xlsx`. To load it into the backend database:
+
+```bash
+cd backend
+uv run python -m app.import_amazon_xlsx --replace
+```
+
+This creates or refreshes the `amazon_products` table in SQLite using the Excel columns shown in your dataset.
 
 ## Run without Docker
 
