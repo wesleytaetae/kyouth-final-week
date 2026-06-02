@@ -1,9 +1,9 @@
 :root {
   color: #14213d;
   background:
-    radial-gradient(circle at top left, rgba(255, 183, 77, 0.3), transparent 28%),
-    radial-gradient(circle at top right, rgba(39, 174, 96, 0.18), transparent 24%),
-    linear-gradient(180deg, #fffaf2 0%, #f3efe6 100%);
+    radial-gradient(circle at top left, rgba(255, 183, 77, 0.15), transparent 35%),
+    radial-gradient(circle at top right, rgba(39, 174, 96, 0.12), transparent 30%),
+    linear-gradient(180deg, #fffaf2 0%, #eaddca 100%);
   font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -16,10 +16,13 @@
 body {
   margin: 0;
   min-width: 320px;
+  height: 100vh;
+  overflow: hidden; /* Prevents the entire page from breaking layout height */
 }
 
 button,
-textarea {
+textarea,
+input {
   font: inherit;
 }
 
@@ -28,247 +31,346 @@ pre {
   font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
 }
 
+/* ==========================================================================
+   Macro Layout Split Changes (Implements the 40/60 Wireframe)
+   ========================================================================== */
+
 .page-shell {
-  min-height: 100vh;
-  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
 }
 
-.chat-card {
-  width: min(980px, 100%);
-  margin: 0 auto;
-  padding: 28px;
-  border-radius: 32px;
-  background: rgba(255, 255, 255, 0.86);
+/* Header Component */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  background: #14213d;
+  color: #fffaf2;
+  height: 64px;
+  box-shadow: 0 4px 20px rgba(20, 33, 61, 0.15);
+  z-index: 10;
+}
+
+.header-logo {
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+}
+
+/* Main Splits Space Layout */
+.workspace-container {
+  display: flex;
+  flex: 1;
+  height: calc(100vh - 64px);
+  overflow: hidden;
+}
+
+/* LEFT PANEL: Chat Context Flow Engine */
+.chat-panel {
+  width: 40%;
+  border-right: 1px solid rgba(20, 33, 61, 0.12);
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  height: 100%;
+}
+
+.chat-log-scrollable {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Composer Container Anchored Base-Left */
+.composer-fixed-bottom {
+  border-top: 1px solid rgba(20, 33, 61, 0.08);
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Tucked Starter Chips Container Styling */
+.prompt-strip-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.prompt-chip-small {
   border: 1px solid rgba(20, 33, 61, 0.1);
-  box-shadow: 0 30px 80px rgba(104, 69, 22, 0.12);
-  backdrop-filter: blur(18px);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: #fffdf8;
+  color: #355070;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 140ms ease;
 }
 
-.hero-block {
-  max-width: 60ch;
+.prompt-chip-small:hover:not(:disabled) {
+  background: #14213d;
+  color: #fffaf2;
+  transform: translateY(-1px);
 }
 
-.eyebrow {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: 0.76rem;
-  color: #b45309;
+/* RIGHT PANEL: Visual Canvas Space */
+.results-panel {
+  width: 60%;
+  background: rgba(243, 239, 230, 0.5);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-h1 {
-  margin: 10px 0 14px;
-  font-size: clamp(2.2rem, 5vw, 4rem);
-  line-height: 0.95;
-  letter-spacing: -0.04em;
+.results-canvas-scrollable {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
 }
 
-.lede {
-  margin: 0;
-  color: #4b5563;
+.panel-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #14213d;
+  margin: 0 0 20px 0;
+  letter-spacing: -0.02em;
 }
+
+/* ==========================================================================
+   UI Components & Elements Tuning
+   ========================================================================== */
 
 .mode-bar {
   display: inline-flex;
-  gap: 10px;
-  margin-top: 24px;
-  padding: 8px;
+  gap: 6px;
+  padding: 4px;
   border-radius: 999px;
-  background: rgba(20, 33, 61, 0.06);
-}
-
-.mode-pill,
-.prompt-chip,
-.submit-button {
-  cursor: pointer;
-  transition:
-    transform 140ms ease,
-    background-color 140ms ease,
-    border-color 140ms ease;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .mode-pill {
   border: 0;
   border-radius: 999px;
-  padding: 12px 18px;
+  padding: 8px 16px;
   background: transparent;
-  color: #355070;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 140ms ease;
 }
 
-.mode-pill.active {
-  background: #14213d;
+.mode-pill:hover {
   color: #fffaf2;
 }
 
-.prompt-strip {
-  margin-top: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.prompt-chip {
-  border: 1px solid rgba(20, 33, 61, 0.1);
-  border-radius: 999px;
-  padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.92);
-  color: #355070;
-  text-align: left;
-}
-
-.prompt-chip:hover,
-.mode-pill:hover,
-.submit-button:hover {
-  transform: translateY(-1px);
-}
-
-.prompt-chip:disabled,
-.submit-button:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-
-.chat-log {
-  margin-top: 24px;
-  padding: 18px;
-  border-radius: 24px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(245, 241, 232, 0.96));
-  border: 1px solid rgba(20, 33, 61, 0.08);
-  display: grid;
-  gap: 14px;
-  min-height: 420px;
+.mode-pill.active {
+  background: #fffaf2;
+  color: #14213d;
+  font-weight: 600;
 }
 
 .message-bubble {
-  max-width: min(760px, 100%);
-  padding: 16px 18px;
-  border-radius: 22px;
+  max-width: 90%;
+  padding: 14px 18px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(20, 33, 61, 0.04);
 }
 
 .message-bubble.user {
   margin-left: auto;
   background: #14213d;
   color: #fffaf2;
-  border-bottom-right-radius: 8px;
+  border-bottom-right-radius: 4px;
 }
 
 .message-bubble.assistant {
-  background: #fffaf2;
+  background: #fffdf8;
   border: 1px solid rgba(20, 33, 61, 0.08);
-  border-bottom-left-radius: 8px;
-}
-
-.message-bubble.pending {
-  border-style: dashed;
+  color: #14213d;
+  border-bottom-left-radius: 4px;
 }
 
 .message-label {
-  margin-bottom: 8px;
-  font-size: 0.74rem;
+  margin-bottom: 4px;
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  opacity: 0.7;
-}
-
-.user-text {
-  margin: 0;
-  white-space: pre-wrap;
-}
-
-.json-block {
-  margin: 0;
-  overflow-x: auto;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-size: 0.92rem;
-  color: #22324f;
-}
-
-.pending-text,
-.composer-hint,
-.error-message {
-  margin: 0;
-  color: #6b7280;
-}
-
-.error-message {
-  margin-top: 18px;
-  color: #b91c1c;
-}
-
-.composer {
-  margin-top: 22px;
-  padding: 18px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(20, 33, 61, 0.08);
-}
-
-.composer-label {
-  display: block;
-  margin-bottom: 10px;
-  font-size: 0.9rem;
-  color: #355070;
+  letter-spacing: 0.1em;
+  opacity: 0.6;
 }
 
 .composer-input {
   width: 100%;
-  resize: vertical;
-  border: 1px solid rgba(20, 33, 61, 0.12);
-  border-radius: 18px;
-  padding: 16px;
-  min-height: 110px;
+  border: 1px solid rgba(20, 33, 61, 0.15);
+  border-radius: 12px;
+  padding: 12px 14px;
   background: #fffdf8;
   color: #14213d;
+  outline: none;
+  transition: border-color 140ms ease;
 }
 
-.composer-footer {
-  margin-top: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+.composer-input:focus {
+  border-color: #14213d;
 }
 
 .submit-button {
   border: 0;
-  border-radius: 18px;
-  padding: 14px 22px;
+  border-radius: 12px;
+  padding: 0 20px;
   background: #f59e0b;
   color: #1f2937;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 140ms ease;
 }
 
-@media (max-width: 720px) {
-  .page-shell {
-    padding: 16px;
-  }
+.submit-button:hover:not(:disabled) {
+  background: #d97706;
+  transform: translateY(-1px);
+}
 
-  .chat-card {
-    padding: 20px;
-  }
+.submit-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
 
-  .mode-bar {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
+/* ==========================================================================
+   Product Grid & Cards System
+   ========================================================================== */
 
-  .prompt-strip {
-    flex-direction: column;
-  }
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
 
-  .prompt-chip {
-    width: 100%;
-  }
+.product-card {
+  background: #ffffff;
+  border: 1px solid rgba(20, 33, 61, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  color: #14213d;
+  box-shadow: 0 4px 12px rgba(20, 33, 61, 0.03);
+}
 
-  .composer-footer {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(20, 33, 61, 0.08);
+}
 
-  .submit-button {
-    width: 100%;
-  }
+.product-image-wrapper {
+  background: #fffdf9;
+  border-bottom: 1px solid rgba(20, 33, 61, 0.04);
+  height: 170px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.product-image {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.discount-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #dc2626;
+  color: #fffaf2;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  z-index: 2;
+}
+
+.product-details {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.product-rating-row {
+  font-size: 0.8rem;
+  color: #f59e0b;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.product-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0 0 12px 0;
+  color: #14213d;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-price-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: auto;
+  margin-bottom: 14px;
+}
+
+.price-current {
+  font-weight: 700;
+  color: #dc2626; /* Keeps visual weight focused on sale prices */
+  font-size: 1.2rem;
+}
+
+.price-original {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+.view-deal-btn {
+  display: block;
+  background: #ffd814;
+  border: 1px solid #fcd200;
+  color: #0f1111;
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 150ms ease;
+}
+
+.view-deal-btn:hover {
+  background: #f7ca00;
+}
+
+.error-message {
+  color: #b91c1c;
+  font-weight: 500;
+  font-size: 0.9rem;
 }
