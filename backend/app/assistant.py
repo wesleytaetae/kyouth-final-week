@@ -16,6 +16,8 @@ load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite"
 MAX_RESULTS = 8
+FILTER_CANDIDATE_MULTIPLIER = 4
+MAX_FILTER_CANDIDATES = 24
 STOPWORDS = {
     "available",
     "a",
@@ -159,6 +161,13 @@ class QueryIntent:
     keywords: list[str]
     sort_mode: str
     result_limit: int
+
+
+@dataclass(frozen=True)
+class LlmProductFilterResult:
+    products: list[dict[str, object]]
+    used: bool
+    error: str | None
 
 
 def _normalize_text(value: str) -> str:
@@ -392,6 +401,10 @@ def _serialize_products(dataframe: pd.DataFrame, limit: int) -> list[dict[str, o
     return products
 
 
+def _candidate_pool_limit(result_limit: int) -> int:
+    return min(MAX_FILTER_CANDIDATES, max(result_limit, result_limit * FILTER_CANDIDATE_MULTIPLIER))
+
+
 def _round_or_none(value: object) -> float | None:
     if value is None or pd.isna(value):
         return None
@@ -550,6 +563,51 @@ def _build_prompt(
     )
 
 
+def _build_filter_prompt(
+    mode: str,
+    message: str,
+    intent: QueryIntent,
+    products: list[dict[str, object]],
+) -> str:
+    evidence = json.dumps(products, ensure_ascii=True)
+    return (
+        "You are a retrieval filtering assistant for Amazon sale data in MYR.\n"
+        "Your job is to pick only the most relevant products for the user's request.\n"
+        "Use only the candidate products provided below.\n"
+        "Prefer semantic relevance over loose keyword overlap.\n"
+        "Remove products that are clearly from the wrong category, connector type, device family, or use case.\n"
+        "If the user asks for one result, return only the single strongest match.\n"
+        "If the user asks for multiple results, return up to that many, ordered best to worst.\n"
+        "Return JSON only with this shape:\n"
+        '{"selected_product_ids":["id1","id2"],"reason":"short explanation"}\n\n'
+        f"User mode: {mode}\n"
+        f"User message: {message}\n"
+        f"Extracted keywords: {', '.join(intent.keywords) if intent.keywords else 'none'}\n"
+        f"Sort intent: {intent.sort_mode}\n"
+        f"Requested result count: {intent.result_limit}\n"
+        f"Candidate products: {evidence}"
+    )
+
+
+def _extract_json_object(text: str) -> dict[str, object] | None:
+    stripped = text.strip()
+    fenced_match = re.search(r"```json\s*(\{.*?\})\s*```", stripped, re.DOTALL)
+    if fenced_match:
+        stripped = fenced_match.group(1)
+    elif stripped.startswith("{") and stripped.endswith("}"):
+        pass
+    else:
+        brace_match = re.search(r"(\{.*\})", stripped, re.DOTALL)
+        if brace_match:
+            stripped = brace_match.group(1)
+
+    try:
+        payload = json.loads(stripped)
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
 def _generate_gemini_response(prompt: str) -> tuple[str | None, str | None]:
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
@@ -567,13 +625,89 @@ def _generate_gemini_response(prompt: str) -> tuple[str | None, str | None]:
         return None, str(exc)
 
 
+def _filter_products_with_llm(
+    mode: str,
+    message: str,
+    intent: QueryIntent,
+    candidates: list[dict[str, object]],
+) -> LlmProductFilterResult:
+    limited_candidates = candidates[: _candidate_pool_limit(intent.result_limit)]
+    fallback_products = limited_candidates[: intent.result_limit]
+
+    if len(limited_candidates) <= intent.result_limit:
+        return LlmProductFilterResult(products=fallback_products, used=False, error=None)
+
+    prompt = _build_filter_prompt(mode, message, intent, limited_candidates)
+    llm_text, llm_error = _generate_gemini_response(prompt)
+    if not llm_text:
+        return LlmProductFilterResult(
+            products=fallback_products,
+            used=False,
+            error=llm_error or "LLM filter returned an empty response",
+        )
+
+    payload = _extract_json_object(llm_text)
+    if not payload:
+        return LlmProductFilterResult(
+            products=fallback_products,
+            used=True,
+            error="LLM filter returned invalid JSON",
+        )
+
+    selected_ids = payload.get("selected_product_ids")
+    if not isinstance(selected_ids, list):
+        return LlmProductFilterResult(
+            products=fallback_products,
+            used=True,
+            error="LLM filter JSON did not contain selected_product_ids",
+        )
+
+    by_id = {
+        str(product["product_id"]): product
+        for product in limited_candidates
+        if product.get("product_id") is not None
+    }
+    selected: list[dict[str, object]] = []
+    seen_ids: set[str] = set()
+
+    for product_id in selected_ids:
+        if not isinstance(product_id, str):
+            continue
+        product = by_id.get(product_id)
+        if product and product_id not in seen_ids:
+            selected.append(product)
+            seen_ids.add(product_id)
+        if len(selected) >= intent.result_limit:
+            break
+
+    if not selected:
+        return LlmProductFilterResult(
+            products=fallback_products,
+            used=True,
+            error="LLM filter did not select any valid candidate products",
+        )
+
+    for product in limited_candidates:
+        product_id = product.get("product_id")
+        if not isinstance(product_id, str) or product_id in seen_ids:
+            continue
+        selected.append(product)
+        seen_ids.add(product_id)
+        if len(selected) >= intent.result_limit:
+            break
+
+    return LlmProductFilterResult(products=selected, used=True, error=None)
+
+
 def run_assistant_query(mode: str, message: str) -> dict[str, object]:
     dataframe = load_products_dataframe()
     intent = _parse_query_intent(mode, message)
     ranked = _score_matches(dataframe, intent, seller_mode=mode == "seller")
-    products = _serialize_products(ranked, intent.result_limit)
     match_count = int(len(ranked))
     confidence = _confidence_from_match_count(match_count)
+    candidate_products = _serialize_products(ranked, _candidate_pool_limit(intent.result_limit))
+    filter_result = _filter_products_with_llm(mode, message, intent, candidate_products)
+    products = filter_result.products[: intent.result_limit]
 
     if mode == "seller":
         deterministic_summary = _build_seller_summary(
@@ -597,6 +731,8 @@ def run_assistant_query(mode: str, message: str) -> dict[str, object]:
             "confidence": confidence,
             "llm_used": llm_answer is not None,
             "llm_error": llm_error,
+            "llm_filter_used": filter_result.used,
+            "llm_filter_error": filter_result.error,
             "database_path": str(Path(DB_PATH).resolve()),
         },
     }

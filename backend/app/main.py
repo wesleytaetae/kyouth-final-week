@@ -31,6 +31,8 @@ class AssistantMetadata(BaseModel):
     confidence: Literal["high", "medium", "low"]
     llm_used: bool
     llm_error: str | None
+    llm_filter_used: bool | None = None
+    llm_filter_error: str | None = None
     database_path: str
 
 

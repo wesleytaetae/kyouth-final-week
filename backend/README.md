@@ -9,8 +9,9 @@ The assistant flow is:
 1. load products from SQLite into a pandas DataFrame
 2. normalize and keyword-match the user query
 3. rank matching products for buyer or seller intent
-4. send the top matches to Gemini for the final answer
-5. fall back to a deterministic summary if Gemini is unavailable
+4. send a broader candidate pool to Gemini to filter down to the most relevant products
+5. send the filtered products to Gemini for the final answer
+6. fall back to a deterministic summary if Gemini is unavailable
 
 ## Endpoints
 
@@ -71,6 +72,8 @@ Both endpoints return:
     "confidence": "high",
     "llm_used": true,
     "llm_error": null,
+    "llm_filter_used": true,
+    "llm_filter_error": null,
     "database_path": "/absolute/path/to/app.db"
   }
 }
@@ -129,6 +132,8 @@ Instead:
 - response-size instructions like `only 1 answer` or `top 3` control how many products are returned in the JSON
 - phrases like `single most expensive` also force a one-product JSON response
 - product matches are ranked deterministically
-- Gemini only writes the final answer from those retrieved rows
+- Gemini now also acts as a second-pass relevance filter over a larger candidate pool before the final list is returned
+- the final answer is generated from that filtered list
+- if the LLM filter fails, the backend falls back to the original deterministic ranking
 
 This keeps answers more grounded and predictable.

@@ -19,6 +19,30 @@ type Message = {
   content: string;
 };
 
+function renderFormattedMessage(content: string) {
+  const lines = content.split("\n");
+
+  return lines.map((line, lineIndex) => {
+    const segments = line.split(/(\*\*.*?\*\*)/g);
+
+    return (
+      <span key={`line-${lineIndex}`}>
+        {segments.map((segment, segmentIndex) => {
+          const isBold = segment.startsWith("**") && segment.endsWith("**") && segment.length > 4;
+          const text = isBold ? segment.slice(2, -2) : segment;
+
+          return isBold ? (
+            <strong key={`segment-${lineIndex}-${segmentIndex}`}>{text}</strong>
+          ) : (
+            <span key={`segment-${lineIndex}-${segmentIndex}`}>{text}</span>
+          );
+        })}
+        {lineIndex < lines.length - 1 ? <br /> : null}
+      </span>
+    );
+  });
+}
+
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 const starterPrompts: Record<Mode, string[]> = {
@@ -148,9 +172,10 @@ export default function App() {
           {
             id: crypto.randomUUID(),
             role: "assistant",
-            content: productsFound.length > 0 
-              ? `I found ${productsFound.length} items matching your request. Check the right panel details!`
-              : JSON.stringify(data, null, 2)
+            content:
+              typeof data?.answer === "string" && data.answer.trim().length > 0
+                ? data.answer
+                : JSON.stringify(data, null, 2)
           },
         ]);
       } else {
@@ -187,7 +212,7 @@ export default function App() {
             {messages.map((msg) => (
               <article key={msg.id} className={`message-bubble ${msg.role}`}>
                 <strong>{msg.role === "user" ? "You" : "AI Assistant"}:</strong>
-                <p style={{ margin: "4px 0 0 0" }}>{msg.content}</p>
+                <p style={{ margin: "4px 0 0 0" }}>{renderFormattedMessage(msg.content)}</p>
               </article>
             ))}
             {submitting && (
